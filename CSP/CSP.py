@@ -1,9 +1,8 @@
-from dataclasses import dataclass, field
-from datetime import timedelta, datetime
-from typing import TypeVar, Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List
 
-from Constraint import BaseConstraint
-from Classes import Task
+from CSP.Constraint import BaseConstraint
+from models.Task import Task
 
 
 class CSP:
@@ -69,12 +68,16 @@ class CSP:
         # if len(assignment) == len(self.tasks):
         #     return assignment
 
-        # if not variables:
-        #     solution = max(self.assignment_score(assignment), self.assignment_score(solution))
-        #     return solution
+        if not variables:
+            # solution = max(self.assignment_score(assignment), self.assignment_score(solution))
+            return assignment, solution
 
         task_to_assign = variables[0]
-        assign_values = sorted(self.domains[task_to_assign], key=lambda val: self.priority_score(task_to_assign, val), reverse=True)
+        # assign_values = sorted(self.domains[task_to_assign], key=lambda val: self.priority_score(task_to_assign, val), reverse=True)
+        assign_values = self.domains[task_to_assign]
+
+        if len(assign_values) == 0:
+            return self.backtracking_search(assignment, variables[1:], solution)
 
         # get all variables in the CSP but not in the assignment
         # unassigned: List[Task] = [task for task in self.tasks if task not in assignment]
@@ -124,23 +127,10 @@ class CSP:
             start_time = assign.__str__()
             print("task " + task.id.__str__() + ": " + start_time)
 
-        # for assign_time in self.domains[task_to_assign].get_optional_hours_range():
-        #     # for value in self.domains[first]:
-        #     local_assignment = assignment.copy()
-        #     local_assignment[task_to_assign] = assign_time
-        #     # if we're still consistent, we recurse (continue)
-        #     if self.consistent(task_to_assign, local_assignment):
-        #
-        #         result = self.backtracking_search(local_assignment)
-        #
-        #         if result is not None:
-        #             return result
-        #
-        # assignment[task_to_assign] = None
-        # return assignment
 
     def solve(self):
+        # tasks = sorted(self.variables, key=lambda t: t.deadline, reverse=False)
         # Sort the list of variables in decreasing order of priority
-        tasks = sorted(self.variables, key=lambda t: t.priority, reverse=False)
+        tasks = sorted(self.variables, key=lambda t: (t.deadline, t.priority), reverse=False)
         result = self.backtracking_search({}, tasks, {})
         return result[1]

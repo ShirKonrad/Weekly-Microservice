@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+
 
 @dataclass
 class TaskDomainObject:
@@ -49,57 +50,12 @@ class TaskDomainObject:
 
     def move_to_next_day(self, curr_time, working_hours):
         # If the time is before midnight, add a day
-        next_day = curr_time + timedelta(days=1)
-        midnight = next_day.replace(microsecond=0, second=0, minute=0, hour=0)
-        if curr_time < midnight:
+        # midnight = time(0, 0)
+        # next_day = curr_time + timedelta(days=1)
+        # midnight = next_day.replace(microsecond=0, second=0, minute=0, hour=0)
+        if curr_time.time() >= time(working_hours[1], 0):
             curr_time += timedelta(days=1)
         return curr_time.replace(hour=working_hours[0])
 
     def __hash__(self):
         return hash((self.interval, self.end_date, self.start_date))
-
-
-@dataclass
-class Task:
-    id: int
-    duration: int
-    priority: int
-    deadline: datetime
-    domain: TaskDomainObject
-
-    def __init__(self, id, duration, priority, deadline):
-        self.id = id
-        self.duration = duration
-        self.priority = priority
-        self.deadline = deadline
-        self.domain = TaskDomainObject(interval=self.duration, end_date=self.deadline)
-
-    def __hash__(self):
-        return hash((self.id, self.duration, self.deadline, self.priority))
-
-    def __eq__(self, other):
-        # return hash(self) == hash(other)
-        return self.id == other.id
-
-    def __repr__(self):
-        return f'Task(id={self.id}, duration={self.duration}, finish_time={self.deadline.__str__()}, priority={self.priority})'
-
-    def get_possible_start_times(self, events, working_hours):
-        return self.domain.get_domain_range(events, working_hours)
-
-
-@dataclass
-class Event:
-    id: int
-    start_time: datetime
-    finish_time: datetime
-
-    def __hash__(self):
-        return hash((self.id, self.start_time, self.finish_time))
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def __repr__(self):
-        return f'Event(start_time={self.start_time.__str__()}, finish_time={self.finish_time.__str__()})'
-
