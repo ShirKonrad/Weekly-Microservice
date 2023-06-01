@@ -1,28 +1,12 @@
 # This is a sample Python script.
-from datetime import datetime, timedelta
-from typing import List, Dict
+from datetime import datetime
 
-from Constraint import OverlapConstraint
-from CSP import CSP
-from Classes import Task, Event
-
+from models.Event import Event
+from models.Task import Task
+from service import get_assignment
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-def get_assignment(tasks, events, working_hours):
-    events.sort(key=lambda event: event.start_time)
-
-    domains = {task: task.get_possible_start_times(events, working_hours) for task in tasks}
-
-    csp: CSP = CSP(tasks, domains)
-    csp.add_constraint(OverlapConstraint(tasks))
-
-    assignment = csp.solve()
-
-    solution = dict(sorted(assignment.items(), key=lambda item: item[1]))
-    solution = {task.id: assign.__str__() for task, assign in solution.items()}
-    return solution
 
 
 def main():
