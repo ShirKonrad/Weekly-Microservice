@@ -12,6 +12,8 @@ class TaskDomainObject:
         new_hour = self.start_date.hour
         if self.start_date.minute != 0:
             new_hour = (new_hour + 1) % 24
+            if new_hour == 0:
+                self.start_date += timedelta(days=1)
         self.start_date = self.start_date.replace(microsecond=0, second=0, minute=0, hour=new_hour)
 
     def get_domain_range(self, events, working_hours):
@@ -49,13 +51,18 @@ class TaskDomainObject:
                 time.hour >= working_hours[1])
 
     def move_to_next_day(self, curr_time, working_hours):
-        # If the time is before midnight, add a day
-        # midnight = time(0, 0)
-        # next_day = curr_time + timedelta(days=1)
-        # midnight = next_day.replace(microsecond=0, second=0, minute=0, hour=0)
-        if curr_time.time() >= time(working_hours[1], 0):
+        # If the curr time is in the same day, outside working hours, add a day
+        if curr_time.hour < working_hours[0] or curr_time.hour >= working_hours[1]:
+            if curr_time.hour >= working_hours[1]:
+                curr_time += timedelta(days=1)
+
+        # If the task ends in the next day (curr time + duration) but the curr time is in the same day, add a day
+        elif (curr_time + timedelta(hours=self.interval)).hour > working_hours[1]:
             curr_time += timedelta(days=1)
+
+        # Change the hour to the start working hour
         return curr_time.replace(hour=working_hours[0])
+
 
     def __hash__(self):
         return hash((self.interval, self.end_date, self.start_date))

@@ -21,7 +21,6 @@ def get_tasks_assignment():
     events = []
     day_hours = (request_data["dayHoursStart"], request_data["dayHoursEnd"])
     for task in request_data["tasks"]:
-        # task["dueDate"] = task["dueDate"][:-1]  # Remove the 'Z' character from the end
         tasks.append(
             Task(id=task["id"], duration=task["estTime"], deadline=datetime.strptime(task["dueDate"], DATE_FORMAT),
                  priority=task["priority"]))
