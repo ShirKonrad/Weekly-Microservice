@@ -51,13 +51,13 @@ class TaskDomainObject:
                 time.hour >= working_hours[1])
 
     def move_to_next_day(self, curr_time, working_hours):
-        # If the curr time is in the same day, outside working hours, add a day
+        # If the curr time is outside the working hours, but in the same day, add a day
         if curr_time.hour < working_hours[0] or curr_time.hour >= working_hours[1]:
             if curr_time.hour >= working_hours[1]:
                 curr_time += timedelta(days=1)
 
-        # If the task ends in the next day (curr time + duration) but the curr time is in the same day, add a day
-        elif (curr_time + timedelta(hours=self.interval)).hour > working_hours[1]:
+        # If the curr time is in the working hours (in case the end time of the task is outside the working hours), add a day
+        else:
             curr_time += timedelta(days=1)
 
         # Change the hour to the start working hour
