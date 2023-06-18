@@ -61,23 +61,36 @@ class TaskDomainObject:
         return domain_range
 
     def is_out_of_working_hours(self, time, working_hours):
-        if working_hours[0] == 0 and working_hours[1] == 0:
+        if working_hours[0] == working_hours[1]:
             return False
 
-        return ((time + timedelta(hours=self.interval)).hour <= working_hours[0] or (
-                time + timedelta(hours=self.interval)).hour > working_hours[1] or
-                time.hour < working_hours[0] or
-                time.hour >= working_hours[1])
+        elif working_hours[0] < working_hours[1]:
+            return ((time + timedelta(hours=self.interval)).hour <= working_hours[0] or (
+                    time + timedelta(hours=self.interval)).hour > working_hours[1] or
+                    time.hour < working_hours[0] or
+                    time.hour >= working_hours[1])
+
+        else:
+            return ((working_hours[1] <= time.hour < working_hours[0]) or
+                    (working_hours[0] >= (time + timedelta(hours=self.interval)).hour > working_hours[1]))
+
 
     def move_to_next_day(self, curr_time, working_hours):
-        # If the curr time is outside the working hours, but in the same day, add a day
-        if curr_time.hour < working_hours[0] or curr_time.hour >= working_hours[1]:
-            if curr_time.hour >= working_hours[1]:
+        if working_hours[0] < working_hours[1]:
+
+            # If the curr time is outside the working hours, but in the same day, add a day
+            if curr_time.hour < working_hours[0] or curr_time.hour >= working_hours[1]:
+                if curr_time.hour >= working_hours[1]:
+                    curr_time += timedelta(days=1)
+
+            # If the curr time is in the working hours (in case the end time of the task is outside the working hours), add a day
+            else:
                 curr_time += timedelta(days=1)
 
-        # If the curr time is in the working hours (in case the end time of the task is outside the working hours), add a day
-        else:
-            curr_time += timedelta(days=1)
+        elif working_hours[0] > working_hours[1]:
+            # if curr_time.hour >= working_hours[0] or curr_time.hour < working_hours[1]:
+            if curr_time.hour >= working_hours[0]:
+                curr_time += timedelta(days=1)
 
         # Change the hour to the start working hour
         return curr_time.replace(hour=working_hours[0])
