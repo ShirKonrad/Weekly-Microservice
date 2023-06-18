@@ -6,15 +6,30 @@ from datetime import datetime, timedelta, time
 class TaskDomainObject:
     interval: int
     end_date: datetime
-    start_date: datetime = field(default=datetime.now())
+    start_date: datetime
 
-    def __post_init__(self):
-        new_hour = self.start_date.hour
-        if self.start_date.minute != 0:
+    def __init__(self, interval, end_date):
+        self.interval = interval
+        self.end_date = end_date
+        self.start_date = self.get_next_round_hour_date(datetime.now())
+
+    def get_next_round_hour_date(self, date):
+        new_date = date
+        new_hour = date.hour
+        if date.minute != 0:
             new_hour = (new_hour + 1) % 24
             if new_hour == 0:
-                self.start_date += timedelta(days=1)
-        self.start_date = self.start_date.replace(microsecond=0, second=0, minute=0, hour=new_hour)
+                new_date += timedelta(days=1)
+        new_date = new_date.replace(microsecond=0, second=0, minute=0, hour=new_hour)
+        return new_date
+
+    # def __post_init__(self):
+    #     new_hour = self.start_date.hour
+    #     if self.start_date.minute != 0:
+    #         new_hour = (new_hour + 1) % 24
+    #         if new_hour == 0:
+    #             self.start_date += timedelta(days=1)
+    #     self.start_date = self.start_date.replace(microsecond=0, second=0, minute=0, hour=new_hour)
 
     def get_domain_range(self, events, working_hours):
         domain_range = []
@@ -33,7 +48,8 @@ class TaskDomainObject:
             # If the current hour overlaps with event, skip on the event time
             if event_i < len(events):
                 curr_event = events[event_i]
-                if (curr_hour <= curr_event.start_time < curr_hour + timedelta(hours=self.interval)) or (curr_event.start_time <= curr_hour < curr_event.finish_time):
+                if (curr_hour <= curr_event.start_time < curr_hour + timedelta(hours=self.interval)) or (
+                        curr_event.start_time <= curr_hour < curr_event.finish_time):
                     is_free = False
                     curr_hour = curr_event.finish_time
                     event_i += 1
@@ -45,24 +61,39 @@ class TaskDomainObject:
         return domain_range
 
     def is_out_of_working_hours(self, time, working_hours):
-        return ((time + timedelta(hours=self.interval)).hour <= working_hours[0] or (
-                time + timedelta(hours=self.interval)).hour > working_hours[1] or
-                time.hour < working_hours[0] or
-                time.hour >= working_hours[1])
+        if working_hours[0] == working_hours[1]:
+            return False
+
+        elif working_hours[0] < working_hours[1]:
+            return ((time + timedelta(hours=self.interval)).hour <= working_hours[0] or (
+                    time + timedelta(hours=self.interval)).hour > working_hours[1] or
+                    time.hour < working_hours[0] or
+                    time.hour >= working_hours[1])
+
+        else:
+            return ((working_hours[1] <= time.hour < working_hours[0]) or
+                    (working_hours[0] >= (time + timedelta(hours=self.interval)).hour > working_hours[1]))
+
 
     def move_to_next_day(self, curr_time, working_hours):
-        # If the curr time is outside the working hours, but in the same day, add a day
-        if curr_time.hour < working_hours[0] or curr_time.hour >= working_hours[1]:
-            if curr_time.hour >= working_hours[1]:
+        if working_hours[0] < working_hours[1]:
+
+            # If the curr time is outside the working hours, but in the same day, add a day
+            if curr_time.hour < working_hours[0] or curr_time.hour >= working_hours[1]:
+                if curr_time.hour >= working_hours[1]:
+                    curr_time += timedelta(days=1)
+
+            # If the curr time is in the working hours (in case the end time of the task is outside the working hours), add a day
+            else:
                 curr_time += timedelta(days=1)
 
-        # If the curr time is in the working hours (in case the end time of the task is outside the working hours), add a day
-        else:
-            curr_time += timedelta(days=1)
+        elif working_hours[0] > working_hours[1]:
+            # if curr_time.hour >= working_hours[0] or curr_time.hour < working_hours[1]:
+            if curr_time.hour >= working_hours[0]:
+                curr_time += timedelta(days=1)
 
         # Change the hour to the start working hour
         return curr_time.replace(hour=working_hours[0])
-
 
     def __hash__(self):
         return hash((self.interval, self.end_date, self.start_date))
