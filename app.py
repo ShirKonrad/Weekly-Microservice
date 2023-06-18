@@ -52,9 +52,11 @@ def get_tasks_assignment():
                       finish_time=datetime.strptime(event["endTime"], DATE_FORMAT)))
         print(tasks)
         print(events)
+        print(day_hours)
 
         solution = get_assignment(tasks, events, day_hours)
         print("Returned assignment")
+        print(solution)
         return json.dumps(solution)
 
     except Exception as error:
