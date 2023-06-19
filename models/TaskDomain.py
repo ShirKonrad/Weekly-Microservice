@@ -45,10 +45,17 @@ class TaskDomainObject:
                 is_free = False
                 curr_hour = self.move_to_next_day(curr_hour, working_hours)
 
-            # If the current hour overlaps with event, skip on the event time
+            # Check overlapping with events
             if event_i < len(events):
                 curr_event = events[event_i]
-                if (curr_hour <= curr_event.start_time < curr_hour + timedelta(hours=self.interval)) or (
+
+                # If the current hour if after the current event, skip to the next event
+                if curr_hour >= curr_event.finish_time:
+                    event_i += 1
+                    is_free = False
+
+                # If the current hour overlaps with event, skip on the event time
+                elif (curr_hour <= curr_event.start_time < curr_hour + timedelta(hours=self.interval)) or (
                         curr_event.start_time <= curr_hour < curr_event.finish_time):
                     is_free = False
                     curr_hour = curr_event.finish_time
