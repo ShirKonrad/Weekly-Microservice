@@ -40,7 +40,7 @@ class CSP:
 
     # The score function favors values that are closer to the deadline and have a higher priority. By doing so,
     # it encourages the solver to find solutions that prioritize tasks with higher priorities and earlier deadlines.
-    def priority_score(self, task, value):
+    def calc_score(self, task, value):
         # Calculate the time difference between the deadline of the task and the starting time of the value.
         time_diff = (task.deadline - value).total_seconds() / 60
 
@@ -58,33 +58,24 @@ class CSP:
     def assignment_score(self, assignment):
         score = 0
         for task, assign_time in assignment.items():
-            score += self.priority_score(task, assign_time)
+            score += self.calc_score(task, assign_time)
 
         return score
-        # return sum(task.priority for task in assignment.keys())
 
     def backtracking_search(self, assignment: Dict[Task, datetime], variables, solution):
-        # assignment is complete if every variable is assigned (our base case)
-        # if len(assignment) == len(self.tasks):
-        #     return assignment
 
         if not variables:
-            # solution = max(self.assignment_score(assignment), self.assignment_score(solution))
             return assignment, solution
 
+        # Get the current task to assign and its possible values to assign from the domain
         task_to_assign = variables[0]
-        # assign_values = sorted(self.domains[task_to_assign], key=lambda val: self.priority_score(task_to_assign, val), reverse=True)
         assign_values = self.domains[task_to_assign]
 
+        # If there are no values to assign, skip on the current task and continue to the next iteration
         if len(assign_values) == 0:
             return self.backtracking_search(assignment, variables[1:], solution)
 
-        # get all variables in the CSP but not in the assignment
-        # unassigned: List[Task] = [task for task in self.tasks if task not in assignment]
-
-        # get the every possible domain value of the first unassigned variable
-        # task_to_assign: Task = unassigned[0]
-
+        # Go over all the values to assign
         for assign_value in assign_values:
             local_assignment = assignment.copy()
             local_assignment[task_to_assign] = assign_value
@@ -97,27 +88,13 @@ class CSP:
                 if result[0] is not None:
                     return result, solution
                 del assignment[task_to_assign]
-                # assignment[task_to_assign] = None
 
         # If not all variables can be assigned values without violating the constraints, then return a partial solution
         if task_to_assign in assignment:
-            # assignment[task_to_assign] = None
             return assignment, solution
-
-        # if len(assignment) == 0:
-        #     return solution
-            # if self.assignment_score(solution) > self.assignment_score(assignment):
-            #     self.print_assignment(solution)
-            #     self.print_assignment(assignment)
-            #     return solution
-            # else:
-            #     self.print_assignment(solution)
-            #     self.print_assignment(assignment)
-            #     return assignment
 
         # If no value can be assigned to the variable without violating the constraints, then backtrack
         return None, solution
-        # assignment[task_to_assign] = None
 
 
     def print_assignment(self, assignment):
@@ -129,8 +106,7 @@ class CSP:
 
 
     def solve(self):
-        # tasks = sorted(self.variables, key=lambda t: t.deadline, reverse=False)
-        # Sort the list of variables in decreasing order of priority
+        # Sort the list of variables in ascending order of deadline and priority
         tasks = sorted(self.variables, key=lambda t: (t.deadline, t.priority), reverse=False)
         result = self.backtracking_search({}, tasks, {})
         return result[1]

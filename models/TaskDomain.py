@@ -49,7 +49,7 @@ class TaskDomainObject:
             if event_i < len(events):
                 curr_event = events[event_i]
 
-                # If the current hour if after the current event, skip to the next event
+                # If the current hour is after the current event, skip to the next event
                 if curr_hour >= curr_event.finish_time:
                     event_i += 1
                     is_free = False
